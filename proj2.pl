@@ -1,9 +1,21 @@
-% You can use this code to get started with your fillin puzzle solver.
-% Make sure you replace this comment with your own documentation.
-%
-
+/** Fillin Puzzle Solver
+*
+* Solves fill in style puzzles read from an input file where underscores
+* represent spaces to-be-filled and hashes represent unfillable spaces and
+* another input file with the word list to be used
+*
+* Outputs to another file similarly formatted, with the spaces filled with the
+* fitting characters.
+*
+* For Declarative Programming (COMP30020)
+* Semester 2, 2018
+*
+* @author Peter Schachte (Skeleton Code)
+* @author James Taranto [640092] (Implementation)
+*/
 
 :- ensure_loaded(library(clpfd)).
+:- use_module(library(pairs)).
 
 main(PuzzleFile, WordlistFile, SolutionFile) :-
 	read_file(PuzzleFile, Puzzle),
@@ -71,6 +83,12 @@ valid_puzzle([Row|Rows]) :-
 % as result.  You'll need to replace this with a working
 % implementation.
 
+%% 
+sort_lists_by_length(Lists, ByLength) :-
+        map_list_to_pairs(atom_length, Lists, Pairs),
+	sort(1, @>=, Pairs, Sorted),
+        pairs_values(Sorted, ByLength).
+
 atoms_to_vars([],[]).
 atoms_to_vars([A|As],[X|Xs]):-
      (A = '_' ->
@@ -81,5 +99,6 @@ atoms_to_vars([A|As],[X|Xs]):-
 puzzle_to_vars(P, X) :-
 	maplist(atoms_to_vars, P, X).
 
-solve_puzzle(Puzzle0, _, Puzzle) :-
-	puzzle_to_vars(Puzzle0, Puzzle).
+solve_puzzle(Puzzle0, WordList, Puzzle) :-
+	puzzle_to_vars(Puzzle0, Puzzle),
+	sort_lists_by_length(WordList, ByLength).
