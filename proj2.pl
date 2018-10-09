@@ -15,6 +15,7 @@
 */
 
 :- ensure_loaded(library(clpfd)).
+
 :- use_module(library(pairs)).
 
 main(PuzzleFile, WordlistFile, SolutionFile) :-
@@ -86,7 +87,7 @@ valid_puzzle([Row|Rows]) :-
 %% 
 sort_lists_by_length(Lists, ByLength) :-
         map_list_to_pairs(atom_length, Lists, Pairs),
-	sort(1, @>=, Pairs, Sorted),
+		sort(1, @>=, Pairs, Sorted),
         pairs_values(Sorted, ByLength).
 
 atoms_to_vars([],[]).
