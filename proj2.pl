@@ -84,7 +84,37 @@ valid_puzzle([Row|Rows]) :-
 % as result.  You'll need to replace this with a working
 % implementation.
 
-%% 
+slots_from_rows([], []).
+slots_from_rows([Row|Rows], Slots) :-
+	slots_from_row(Row, [], Slots1),
+	slots_from_rows(Rows, Slots2),
+	append(Slots1, Slots2, Slots).
+
+slots_from_row([], CurrentSlot, Slots) :-
+    length(CurrentSlot, N),
+    (   N > 1
+    ->  Slots = [CurrentSlot]
+    ;   Slots = []
+    ).
+slots_from_row([Var|Vars], CurrentSlot, Slots) :-
+    (   Var \== '#'
+    ->  append(CurrentSlot, [Var], CurrentSlot1),
+        slots_from_row(Vars, CurrentSlot1, Slots)
+    ;   length(CurrentSlot, N),
+        (   N > 1
+        ->  Slots = [CurrentSlot|Slots1]
+        ;   Slots = Slots1
+        ),
+        slots_from_row(Vars, [], Slots1)
+    ).
+
+
+slots_from_puzzle(Puzzle, Slots) :-
+	slots_from_rows(Puzzle, Slots1),
+	transpose(Puzzle, PuzzleT),
+	slots_from_rows(PuzzleT, Slots2),
+	append(Slots1, Slots2, Slots).
+
 sort_lists_by_length(Lists, ByLength) :-
         map_list_to_pairs(atom_length, Lists, Pairs),
 		sort(1, @>=, Pairs, Sorted),
@@ -100,6 +130,7 @@ atoms_to_vars([A|As],[X|Xs]):-
 puzzle_to_vars(P, X) :-
 	maplist(atoms_to_vars, P, X).
 
-solve_puzzle(Puzzle0, WordList, Puzzle) :-
+solve_puzzle(Puzzle0, Words, Solved) :-
 	puzzle_to_vars(Puzzle0, Puzzle),
-	sort_lists_by_length(WordList, ByLength).
+	slots_from_puzzle(Puzzle, Slots),
+	sort_lists_by_length(Words, WordsByLength).
