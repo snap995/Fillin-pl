@@ -5,10 +5,6 @@
 
 :- ensure_loaded(library(clpfd)).
 
-start :-
-	main('samples/puzzle2', 'samples/words2', test2).
-start.
-
 main(PuzzleFile, WordlistFile, SolutionFile) :-
 	read_file(PuzzleFile, Puzzle),
 	read_file(WordlistFile, Wordlist),
