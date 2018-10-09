@@ -118,6 +118,7 @@ slots_from_puzzle(Puzzle, Slots) :-
 sort_lists_by_length(Lists, ByLength) :-
         map_list_to_pairs(atom_length, Lists, Pairs),
 		sort(1, @>=, Pairs, Sorted),
+		%keysort(Pairs, Sorted),
         pairs_values(Sorted, ByLength).
 
 atoms_to_vars([],[]).
@@ -130,7 +131,14 @@ atoms_to_vars([A|As],[X|Xs]):-
 puzzle_to_vars(P, X) :-
 	maplist(atoms_to_vars, P, X).
 
-solve_puzzle(Puzzle0, Words, Solved) :-
-	puzzle_to_vars(Puzzle0, Puzzle),
-	slots_from_puzzle(Puzzle, Slots),
-	sort_lists_by_length(Words, WordsByLength).
+all_member([], _).
+all_member([W|Ws], Ss) :-
+	member(W, Ss),
+	all_member(Ws, Ss).
+
+solve_puzzle(Puzzle, Words, Solved) :-
+	puzzle_to_vars(Puzzle, Solved),
+	slots_from_puzzle(Solved, Slots),
+	sort_lists_by_length(Words, WordsByLength),
+	all_member(WordsByLength, Slots).
+
