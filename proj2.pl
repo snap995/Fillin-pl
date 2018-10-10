@@ -173,14 +173,6 @@ atoms_to_vars([A|As],[X|Xs]):-
 */
 puzzle_to_vars(P, X) :-
 	maplist(atoms_to_vars, P, X).
-/*
-* Satisfied when a word (Word) in [Match|Matches] can be fit into slot (Slot),
-* Recurses through the matches only when backtracking
-*/
-unify_slot(Slot, [Match|Matches], Word) :-
-	Slot = Match,
-	Match = Word;
-	unify_slot(Slot, Matches, _).
 
 /*
 * Where the magic happens
@@ -193,10 +185,9 @@ unify_slot(Slot, [Match|Matches], Word) :-
 */
 fill_puzzle([], []).
 fill_puzzle(Words, Slots) :-
-	find_best_slot(Words, Slots, Slot, Matches),
+	find_best_slot(Words, Slots, Slot),
 	select(Slot, Slots, Slots1),
-	unify_slot(Slot, Matches, Word),
-	select(Word, Words, Words1),
+	select(Slot, Words, Words1),
 	fill_puzzle(Words1, Slots1).
 /*
 * This funky looking predicate takes a word list and slot list and recurses
@@ -209,7 +200,7 @@ fill_puzzle(Words, Slots) :-
 */
 find_slot_word_matches(_, [], []).
 find_slot_word_matches(Words, [Slot|Slots], [Matches-Slot|Pairs]) :-
-	findall(Slot, member(Slot, Words), Matches),
+	bagof(Slot, member(Slot, Words), Matches),
 	find_slot_word_matches(Words, Slots, Pairs).	
 
 /*
@@ -221,17 +212,17 @@ find_slot_word_matches(Words, [Slot|Slots], [Matches-Slot|Pairs]) :-
 length_of_key(Key-Value, N-Pair) :-
 	length(Key, N),
 	Pair = Key-Value.
+
 /*
 * Finds the possible words for each slot, sorts them by amount of possible
 * words, and gives you the slot with the least amount of possible matches, and
 * those words
 */
-find_best_slot(Words, Slots, Slot, Matches) :-
+find_best_slot(Words, Slots, Slot) :-
 	find_slot_word_matches(Words, Slots, Pairs0),
 	maplist(length_of_key, Pairs0, Pairs1),
-	pairs_keys(Pairs1, Keys),
-	select(Keys<1, Pairs1, Pairs2),
-	keysort(Pairs2, [_-(Matches-Slot)|_]).
+	keysort(Pairs1, PairsSorted),
+	PairsSorted = [_-(_-Slot)|_].
 
 /* Satisfied when Solved is a solution for Puzzle using Words to fill the puzzle
 * Replaces the underscores with logical variables, finds the runs of logical
@@ -241,7 +232,5 @@ find_best_slot(Words, Slots, Slot, Matches) :-
 solve_puzzle(Puzzle, Words, Solved) :-
 	puzzle_to_vars(Puzzle, Solved),
 	slots_from_puzzle(Solved, Slots),
-	sort_lists_by_length(Words, WordsByLength),
-	sort_lists_by_length(Slots, SlotsByLength),
-	fill_puzzle(WordsByLength, SlotsByLength).
+	fill_puzzle(Words, Slots).
 
