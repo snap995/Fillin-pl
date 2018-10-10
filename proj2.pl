@@ -116,7 +116,7 @@ slots_from_puzzle(Puzzle, Slots) :-
 	append(Slots1, Slots2, Slots).
 
 sort_lists_by_length(Lists, ByLength) :-
-        map_list_to_pairs(atom_length, Lists, Pairs),
+        map_list_to_pairs(length, Lists, Pairs),
 		sort(1, @>=, Pairs, Sorted),
 		%keysort(Pairs, Sorted),
         pairs_values(Sorted, ByLength).
@@ -135,6 +135,30 @@ all_member([], _).
 all_member([W|Ws], Ss) :-
 	member(W, Ss),
 	all_member(Ws, Ss).
+
+fill_puzzle(Words, Slots) :-
+	find_best_slot(Words, Slots, Slot),
+	filter(=(Slot), Words, Words1),
+	member(Word, Words1),
+	Slot = Word,
+	delete(Words, Word, Words2),
+	delete(Slots, Slot, Slots2),
+	fill(Words2, Slots2).
+
+count_slot_word_matches(_, [], []).
+count_slot_word_matches(Words, [Slot|Slots], [Matches-Slot|Pairs]) :-
+	findall(Slot, member(Slot, Words), Matches),
+	count_slot_word_matches(Words, Slots, Pairs).
+	
+find_best_slot(Words, Slots, Slot, Matches) :-
+	count_slot_word_matches(Words, Slots, Pairs),
+	pairs_keys(Pairs, Matches0),
+	map_list_to_pairs(length(Matches0), Pairs, PairsByMatches),
+	keysort(PairsByMatches, [Best0|_]),
+	pairs_values(Best0, Best),
+	pairs_keys(Best, Matches),
+	pairs_values(Best, Slot).
+
 
 solve_puzzle(Puzzle, Words, Solved) :-
 	puzzle_to_vars(Puzzle, Solved),
