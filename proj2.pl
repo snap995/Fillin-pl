@@ -117,8 +117,7 @@ slots_from_puzzle(Puzzle, Slots) :-
 
 sort_lists_by_length(Lists, ByLength) :-
         map_list_to_pairs(length, Lists, Pairs),
-		sort(1, @>=, Pairs, Sorted),
-		%keysort(Pairs, Sorted),
+	sort(1, @>=, Pairs, Sorted),
         pairs_values(Sorted, ByLength).
 
 atoms_to_vars([],[]).
@@ -136,33 +135,35 @@ all_member([W|Ws], Ss) :-
 	member(W, Ss),
 	all_member(Ws, Ss).
 
+unify_slot(Slot, [Match|Matches], Word) :-
+	Slot = Match,
+	Match = Word;
+	unify_slot(Slot, Matches, _).
+fill_puzzle([], []).
 fill_puzzle(Words, Slots) :-
-	find_best_slot(Words, Slots, Slot),
-	filter(=(Slot), Words, Words1),
-	member(Word, Words1),
-	Slot = Word,
-	delete(Words, Word, Words2),
-	delete(Slots, Slot, Slots2),
-	fill(Words2, Slots2).
+	find_best_slot(Words, Slots, Slot, Matches),
+	select(Slot, Slots, Slots1),
+	unify_slot(Slot, Matches, Word),
+	select(Word, Words, Words1),
+	fill_puzzle(Words1, Slots1).
 
-count_slot_word_matches(_, [], []).
-count_slot_word_matches(Words, [Slot|Slots], [Matches-Slot|Pairs]) :-
+find_slot_word_matches(_, [], []).
+find_slot_word_matches(Words, [Slot|Slots], [Matches-Slot|Pairs]) :-
 	findall(Slot, member(Slot, Words), Matches),
-	count_slot_word_matches(Words, Slots, Pairs).
-	
-find_best_slot(Words, Slots, Slot, Matches) :-
-	count_slot_word_matches(Words, Slots, Pairs),
-	pairs_keys(Pairs, Matches0),
-	map_list_to_pairs(length(Matches0), Pairs, PairsByMatches),
-	keysort(PairsByMatches, [Best0|_]),
-	pairs_values(Best0, Best),
-	pairs_keys(Best, Matches),
-	pairs_values(Best, Slot).
+	find_slot_word_matches(Words, Slots, Pairs).	
 
+length_of_key(Key-Value, N-Pair) :-
+	length(Key, N),
+	Pair = Key-Value.
+
+find_best_slot(Words, Slots, Slot, Matches) :-
+	find_slot_word_matches(Words, Slots, Pairs0),
+	maplist(length_of_key, Pairs0, Pairs1),
+	keysort(Pairs1, [_-(Matches-Slot)|_]).
 
 solve_puzzle(Puzzle, Words, Solved) :-
 	puzzle_to_vars(Puzzle, Solved),
 	slots_from_puzzle(Solved, Slots),
 	sort_lists_by_length(Words, WordsByLength),
-	all_member(WordsByLength, Slots).
+	fill_puzzle(WordsByLength, Slots).
 
